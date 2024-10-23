@@ -1,0 +1,414 @@
+---
+title: "homework3"
+author: "Songran Wang"
+date: "2024-10-22"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1
+
+## a
+
+```{r}
+data(sleep)
+sleep <- sleep
+```
+
+$$
+t\left(\mathbf{Y}_A, \mathbf{Y}_B\right)=\frac{\bar{y}_A-\bar{y}_B-(\mu_A-\mu_B)}{s_p \sqrt{1 / n_A+1 / n_B}}\sim t_{n_A+n_B-2}
+$$ so the interval is $$
+\bar{y}_A-\bar{y}_B\pm s_p\sqrt{\frac{1}{n_A}+\frac{1}{n_B}}t_{1-\frac{\alpha}{2}}(n_A+n_B-2)
+$$
+
+```{r}
+ya <- sleep$extra[sleep$group == 1]
+yb <- sleep$extra[sleep$group == 2]
+na<-length(ya)
+nb<-length(yb)
+mean_diff<-mean(ya)-mean(yb)
+t<-qt(0.975, df = 18)
+sp<- sqrt(((na- 1) * var(ya) + (nb- 1) * var(yb)) / (na+ nb- 2))
+lower<- mean_diff-sp* sqrt(1/na + 1/nb)*t
+upper<- mean_diff+sp* sqrt(1/na + 1/nb)*t
+lower
+upper
+
+```
+
+so the real interval is $[-3.364,0.204]$
+
+## b
+
+Given the sampling model:
+
+$$
+\begin{aligned}
+& Y_{1, A}, \ldots, Y_{n_A, A} \sim \text { i.i.d. } N\left(\mu_A, \sigma^2\right) \\
+& Y_{1, B}, \ldots, Y_{n_B, B} \sim \text { i.i.d. } N\left(\mu_B, \sigma^2\right) .
+\end{aligned}
+$$
+
+we can get that:
+
+$$
+\bar{Y}_A-\bar{Y}_B \sim N\left(\delta, \sigma^2\left(\frac{1}{n_A}+\frac{1}{n_B}\right)\right)
+$$
+
+$$
+\frac{\left(n_A+n_B-2\right) s_P^2}{\sigma^2} \sim \chi^2\left(n_A+n_B-2\right)
+$$
+
+$$
+t\left(\mathbf{Y}_A, \mathbf{Y}_B\right)=\frac{\left(\bar{Y}_A-\bar{Y}_B\right)-\delta}{s_p \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}+\frac{\boldsymbol{\delta}}{s_p \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}
+$$
+
+For the first term:
+
+$$
+\frac{\left(\bar{Y}_A-\bar{Y}_B\right)-\delta}{\sigma \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}} \sim N(0,1)
+$$
+
+$$
+\frac{\frac{\left(\bar{Y}_A-\bar{Y}_B\right)-\delta}{\sigma \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}}{\frac{\frac{\left(n_A+n_B-2\right) s_p^2}{\sigma^2}}{n_A+n_B-2}} =\frac{\left(\bar{Y}_A-\bar{Y}_B\right)-\delta}{s_p \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}} \sim t\left(n_A+n_B-2\right)
+$$
+
+For the second term:
+
+$$
+\frac{\delta}{s_p \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}=\frac{\frac{\delta}{\sigma \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}}{\sqrt{\frac{\frac{\left(n_A+n_B-2\right) s_p^2}{\sigma^2}}{n_A+n_B-2}}} 
+$$
+
+Thus, $t\left(\mathbf{Y}_A, \mathbf{Y}_B\right)$ follows a non-central t-distribution with a non-centrality parameter $\frac{\delta}{s_p \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}$
+
+### i
+
+$$
+Z=\frac{\left(\bar{Y}_A-\bar{Y}_B\right)-\delta}{\sigma \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}
+$$
+
+### ii
+
+$$
+X=\frac{\left(n_A+n_B-2\right) S_P^2}{\sigma^2}
+$$
+
+### iii
+
+$$
+\gamma=\frac{\delta}{\sigma \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}}
+$$
+
+## c
+
+To maximize the power, we need to maximize the $\gamma$, as the power is an increasing function of the of $|\gamma|$. Suppose that $\delta$ is positive, we just need to maximize $\gamma$, which is equivalent to minimize $\frac{1}{n_A}+\frac{1}{n_B}$.
+
+we want to minimize the function: $f\left(n_A\right)=\frac{1}{n_A}+\frac{1}{N-n_A}$ $$
+\frac{d}{d n_A} f\left(n_A\right)=-\frac{1}{n_A^2}+\frac{1}{\left(N-n_A\right)^2}
+$$ $$
+\frac{d^2}{d n_A^2} f\left(n_A\right)=\frac{2}{n_A^3}+\frac{2}{\left(N-n_A\right)^3}>0 \quad (n_A>0)
+$$ so $f\left(n_A\right)$ is a convex function, it has a minimum value at $\frac{d}{d n_A} f\left(n_A\right)=0$
+
+$$
+-\frac{1}{n_A^2}+\frac{1}{\left(N-n_A\right)^2}=0
+$$ by solving this equation, we can get that: $$
+n_A=\frac{N}{2}
+$$
+
+Thus, when $n_A=n_B=\frac{N}{2}$, the power is the maximum.
+
+# 2
+
+$$
+MST=\frac{\sum_{i=1}^m n\left(\bar{Y}_{i .}-\bar{Y}_{. .}\right)^2}{m-1}
+$$ where $$
+\bar{Y}_{i.}=\frac{1}{n} \sum_{j=1}^n Y_{i j}=\frac{1}{n} \sum_{j=1}^n\left(\mu_i+\epsilon_{i j}\right)=\mu_i+\frac{1}{n} \sum_{j=1}^n \epsilon_{i j}=\mu_i+\bar{\epsilon}_i
+$$ $$
+\bar{Y}_{. .}=\frac{1}{m n} \sum_{i=1}^m \sum_{j=1}^n Y_{i j}=\frac{1}{m n} \sum_{i=1}^m \sum_{j=1}^n\left(\mu_i+\epsilon_{i j}\right)=\bar{\mu}+\frac{1}{m n} \sum_{i=1}^m \sum_{j=1}^n \epsilon_{i j}=\bar{\mu}+\bar{\epsilon}_{..}
+$$ then $$
+\left(\bar{Y}_{i .}-\bar{Y}_{. .}\right)^2=\left(\left(\mu_i-\bar{\mu}\right)+\left(\bar{\epsilon}_{j .}-\bar{\epsilon}_{. .}\right)\right)^2=\left(\mu_i-\bar{\mu}\right)^2+2\left(\mu_i-\bar{\mu}\right)\left(\bar{\epsilon}_{i .}-\bar{\epsilon}_{. .}\right)+\left(\bar{\epsilon}_{j .}-\bar{\epsilon}_{. .}\right)^2
+$$
+
+for the second term: $$
+E\left[2\left(\mu_i-\bar{\mu}\right)\left(\bar{\epsilon}_{i .}-\bar{\epsilon}_{. .}\right) \mid \boldsymbol{\mu}\right]=2\left(\mu_i-\bar{\mu}\right) E\left[\bar{\epsilon}_{i .}-\bar{\epsilon}_{. .}\right]=2\left(\mu_i-\bar{\mu}\right)(E(\bar{\epsilon}_{i .})-E(\bar{\epsilon}_{. .}))=0
+$$ for the third term: $$
+\begin{aligned}
+E\left[\left(\bar{\epsilon}_{i .}-\bar{\epsilon}_{. .}\right)^2 \mid \boldsymbol{\mu}\right]=\operatorname{Var}\left(\bar{\epsilon}_{i .}-\bar{\epsilon}_{. .}\right)&=\operatorname{Var}\left( \frac{1}{n}\sum^n_{j=1}\epsilon_{ij}-\frac{1}{mn}\sum^m_{i=1}\sum^n_{j=1}\epsilon_{ij}    \right)\\
+&=\operatorname{Var}\left( \left(   \frac{1}{n}-\frac{1}{mn}   \right)\sum^n_{j=1}\epsilon_{ij}-\frac{1}{mn}\sum^m_{p=1,p\neq i}\sum^n_{j=1}\epsilon_{ij}     \right)\\
+&=\left(   \frac{1}{n}-\frac{1}{mn}   \right)^2n\sigma^2+\frac{1}{m^2n^2}(m-1)n\sigma^2\\
+&=\frac{m-1}{n}\sigma^2
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+E[M S T]&=\frac{n}{m-1} \sum_{i=1}^m E\left[\left(\bar{Y}_{i .}-\bar{Y}_{. .}\right)^2 \mid \boldsymbol{\mu}\right]\\
+&=\frac{n}{m-1} \sum_{i=1}^m\left(\left(\mu_i-\bar{\mu}\right)^2+\frac{m-1}{n}\sigma^2\right)\\
+&=\sigma^2+\frac{n \sum_{i=1}^m\left(\mu_i-\bar{\mu}\right)^2}{m-1}
+\end{aligned}
+$$
+
+# 3
+
+## a
+
+$$
+\begin{aligned}
+Y_{i j}&=\mu+\tau_i+\epsilon_{i j}, \quad i=A, B, C, D, \quad j=1, \ldots, n_i\\
+E\left[\epsilon_{i j}\right]&=0\\
+\operatorname{Var}\left[\epsilon_{i j}\right]&=\sigma^2\\
+\epsilon_{i j} \text{ are iid}
+\end{aligned}
+$$ where
+
+$Y_{i j} \text { is the observed blood coagulation time for animal } j \text { on diet } i,$
+
+$\mu \text { is the grand mean }$
+
+$\tau_i \text { is the treatment effect of diet } i \text {, where } i=A, B, C, D$
+
+$\epsilon_{i j}$ 's still represent within treatment variation.
+
+$\sum_{i=A}^D \tau_i=0$
+
+## b
+
+```{r}
+
+
+diet_A <- c(62, 60, 63, 59, 64)
+diet_B <- c(65, 67, 73, 65, 66)
+diet_C <- c(69, 66, 71, 67, 67, 68, 62)
+diet_D <- c(66, 62, 65, 61, 64, 65, 63)
+
+diets <- list(A = diet_A, B = diet_B, C = diet_C, D = diet_D)
+
+group_means <- sapply(diets, mean)
+
+overall_mean <- mean(c(diet_A, diet_B, diet_C, diet_D))
+
+plot(rep(1, length(diet_A)), diet_A, pch=19, col='red', xlim=c(0.5, 4.5), ylim=c(55, 75),
+     xaxt='n', xlab='Diet', ylab='Blood Coagulation Time', main='Scatter Plot of Blood Coagulation Times')
+points(rep(2, length(diet_B)), diet_B, pch=19, col='blue')
+points(rep(3, length(diet_C)), diet_C, pch=19, col='green')
+points(rep(4, length(diet_D)), diet_D, pch=19, col='purple')
+
+points(1, group_means['A'], pch=4, col='red', cex=2, lwd=2)
+points(2, group_means['B'], pch=4, col='blue', cex=2, lwd=2)
+points(3, group_means['C'], pch=4, col='green', cex=2, lwd=2)
+points(4, group_means['D'], pch=4, col='purple', cex=2, lwd=2)
+
+abline(h = overall_mean, col = 'black', lty = 2)
+
+axis(1, at=1:4, labels=c('A', 'B', 'C', 'D'))
+```
+
+The plot cannot indicate a real difference among four diets.
+
+## c
+
+```{r}
+
+m <- length(diets)
+n_A <- length(diet_A)
+n_B <- length(diet_B)
+n_C <- length(diet_C)
+n_D <- length(diet_D)
+N <- sum(n_A, n_B, n_C, n_D)
+
+var_A <- var(diet_A)
+var_B <- var(diet_B)
+var_C <- var(diet_C)
+var_D <- var(diet_D)
+
+MST <- sum(n_A * (group_means['A'] - overall_mean)^2,
+           n_B * (group_means['B'] - overall_mean)^2,
+           n_C * (group_means['C'] - overall_mean)^2,
+           n_D * (group_means['D'] - overall_mean)^2) / (m-1)
+
+SSE <- (length(diet_A) - 1) * var_A + (length(diet_B) - 1) * var_B +(length(diet_C) - 1) * var_C + (length(diet_D) - 1) * var_D
+MSE <- SSE / (N - m)
+
+cat("var_A=",var_A,'\n')
+cat("var_B=",var_B,'\n')
+cat("var_C=",var_C,'\n')
+cat("var_D=",var_D,'\n')
+cat('MSE=',MSE)
+```
+
+Thus,
+
+var_A= 4.3
+
+var_B= 11.2
+
+var_C= 7.810
+
+var_D= 3.238
+
+MSE= 6.414
+
+## d
+
+```{r}
+MST <- sum(n_A * (group_means['A'] - overall_mean)^2,
+           n_B * (group_means['B'] - overall_mean)^2,
+           n_C * (group_means['C'] - overall_mean)^2,
+           n_D * (group_means['D'] - overall_mean)^2) / (m-1)
+
+cat('MST=',MST,'\n')
+```
+
+MST=41.905
+
+$\mathrm{E}[\mathrm{MSE}]=\sigma^2$, and $\mathrm{E}[\mathrm{MST}]=\sigma^2+\frac{n \sum_{i=1}^m\left(\mu_i-\bar{\mu}\right)^2}{m-1}$, the difference is so large, we can preliminarily say that the difference among four groups are significant.
+
+## e
+
+```{r}
+
+data <- data.frame(
+  coagulation_time = c(diet_A, diet_B, diet_C, diet_D),
+  diet = factor(rep(c("A", "B", "C", "D"), times = c(length(diet_A), length(diet_B), length(diet_C), length(diet_D))))
+)
+
+anova_result <- aov(coagulation_time ~ diet, data = data)
+summary(anova_result)
+```
+
+p-values=0.00294, so we can say that there is a difference in coagulation times for these four diets.
+
+## f
+
+```{r}
+residuals <- data$coagulation_time - unlist(sapply(data$diet, function(x) group_means[x]))
+
+qqnorm(residuals)
+qqline(residuals, col = "red")
+
+residuals
+```
+
+the residuals appear to come from a normal distribution.
+
+# 4
+
+```{r}
+data <- readRDS("D:/zinc.RDS")
+str(data)
+```
+
+```{r}
+low_diversity <- data$DIVERSITY[data$ZINC == "LOW"]
+med_diversity <- data$DIVERSITY[data$ZINC == "MED"]
+high_diversity <- data$DIVERSITY[data$ZINC == "HIGH"]
+back_diversity <- data$DIVERSITY[data$ZINC == "BACK"]
+
+diversity <- list(LOW = low_diversity, MED = med_diversity, HIGH = high_diversity, BACK = back_diversity)
+
+group_means <- sapply(diversity, mean)
+
+overall_mean <- mean(c(low_diversity, med_diversity, high_diversity, back_diversity))
+
+plot(rep(1, length(low_diversity)), low_diversity, pch=19, col='red',xlim=c(0.5, 4.5),ylim=c(0,3),
+     xaxt='n', xlab='Zinc Levels', ylab='Diversity', main='Scatter Plot of Biodiversity')
+points(rep(2, length(med_diversity)), med_diversity, pch=19, col='blue')
+points(rep(3, length(high_diversity)), high_diversity, pch=19, col='green')
+points(rep(4, length(back_diversity)), back_diversity, pch=19, col='purple')
+
+points(1, group_means['LOW'], pch=4, col='red', cex=2, lwd=2)
+points(2, group_means['MED'], pch=4, col='blue', cex=2, lwd=2)
+points(3, group_means['HIGH'], pch=4, col='green', cex=2, lwd=2)
+points(4, group_means['BACK'], pch=4, col='purple', cex=2, lwd=2)
+
+abline(h = overall_mean, col = 'black', lty = 2)
+
+axis(1, at=1:4, labels=c('LOW', 'MED', 'HIGH', 'BACK'))
+```
+
+these does not indicate a difference in biodiversity of rivers with different zinc levels.
+
+## b
+
+```{r}
+m <- length(diversity)
+n_low<- length(low_diversity)
+n_med<- length(med_diversity)
+n_high <- length(high_diversity)
+n_back <- length(back_diversity)
+N <- sum(n_low, n_med, n_high, n_back)
+
+var_low <- var(low_diversity)
+var_med <- var(med_diversity)
+var_high <- var(high_diversity)
+var_back <- var(back_diversity)
+
+MST <- sum(n_low * (group_means['LOW'] - overall_mean)^2,
+           n_med * (group_means['MED'] - overall_mean)^2,
+           n_high * (group_means['HIGH'] - overall_mean)^2,
+           n_back * (group_means['BACK'] - overall_mean)^2) / (m-1)
+
+SSE <- (n_low - 1) * var_low + (n_med - 1) * var_med +(n_high - 1) * var_high + (n_back - 1) * var_back
+MSE <- SSE / (N - m)
+
+cat("var_low=",var_low,'\n')
+cat("var_med=",var_med,'\n')
+cat("var_high=",var_high,'\n')
+cat("var_back=",var_back,'\n')
+cat('MSE=',MSE)
+```
+
+Thus,
+
+var_low= 0.1980214
+
+var_med= 0.2876286
+
+var_high= 0.2081268
+
+var_back= 0.2354786
+
+MSE= 0.232
+
+## c
+
+```{r}
+
+data_diversity<- data.frame(
+  diversity = c(low_diversity, med_diversity, high_diversity, back_diversity),
+  zinc = factor(rep(c("low", "med", "high", "back"), times = c(length(low_diversity), length(med_diversity), length(high_diversity), length(back_diversity))))
+)
+
+anova_result <- aov(diversity ~ zinc, data = data_diversity)
+summary(anova_result)
+```
+
+MST=0.789
+
+F=3.396
+
+the F value is not under the null
+
+## d
+
+```{r}
+set.seed(123)  # For reproducibility
+n_simulations <- 1000
+f_ratios <- numeric(n_simulations)
+
+for (i in 1:n_simulations) {
+  # Randomly shuffle the biodiversity data
+  shuffled_data <- sample(data$DIVERSITY)
+  random_model <- aov(shuffled_data ~ ZINC, data = data)
+  f_ratios[i] <- summary(random_model)[[1]][["F value"]][1]
+}
+
+# Calculate the p-value
+p_value <- mean(f_ratios >= 3.396)
+p_value
+```
+
+p-value=0.023, we reject the null hypothesis that there is no difference in biodiversity of rivers with different zinc levels.

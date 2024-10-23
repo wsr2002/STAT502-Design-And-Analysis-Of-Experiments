@@ -1,0 +1,301 @@
+---
+title: "STAT502 homework 1"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-10-06"
+---
+
+```{r, include=FALSE}
+options(tinytex.verbose = TRUE)
+```
+
+# 1
+
+## (a)
+
+-   advantage:
+
+Children may feel comfortable with what they choose
+
+-   disadvantage:
+
+Children may choose diets based on their preference, which may lead to confunding facts. Thus, it is difficult to know whether the height difference is caused by diets or their preference.
+
+## (b)
+
+-   advantage:
+
+Easy to implement.
+
+-   disadvantage:
+
+It is not random, which may lead to unintended biases.
+
+## (c)
+
+-   advantage:
+
+Easy to implement, more balance.
+
+-   disadvantage:
+
+It is not random, which may lead to unintended biases.
+
+## (d)
+
+-   advantage:
+
+Very randomized, and each children has an equal chance to be assigned to each group.
+
+-   disadvantage:
+
+It is likely that two groups are inbalanced, which may lead to less statistical power.
+
+## (e)
+
+-   advantage:
+
+Ensure the randomness and balance.
+
+-   disadvantage:
+
+If different children have different objective condition, such as different height or weight, leading to latent imbalance.
+
+# 2
+
+## (b)
+
+```{r}
+b <- c(rep("A", 10), rep("B", 10))
+print(b)
+```
+
+## (c)
+
+```{r}
+c <- rep(c("A", "B"), 10)
+print(c)
+```
+
+## (d)
+
+```{r}
+set.seed(123) 
+d <- sample(c("A", "B"), 20, replace = TRUE)
+print(d)
+```
+
+\##(e)
+
+```{r}
+set.seed(123)  # Setting seed for reproducibility
+e <- sample(c(rep("A", 10), rep("B", 10)))
+print(e)
+```
+
+# 3
+
+## (a)
+
+```{r}
+library(dplyr)
+Plants <- readRDS("D:/Plants.RDS")
+
+# Calculate statistics for both groups
+stats <- Plants%>%
+  group_by(group) %>%
+  summarise(
+    mean = mean(weight),
+    median = median(weight),
+    sd = sd(weight))
+
+stats
+```
+
+```{r}
+library(ggplot2)
+
+
+# Plot Empirical CDFs
+ggplot(Plants, aes(x = weight, color = factor(group))) +
+  stat_ecdf(geom = "step") +
+  labs(title = "Empirical CDFs of Plant Weights",
+       x = "Weight",
+       y = "Empirical CDF",
+       color = "Group") 
+
+```
+
+## (b)
+
+### i
+
+```{r}
+group1 <- Plants$weight[Plants$group == 1]
+group2 <- Plants$weight[Plants$group == 2]
+
+# calculate KS
+ks_test <- ks.test(group1, group2)
+ks_statistic <- ks_test$statistic
+
+
+# calculate variance
+var1 <- var(group1)
+var2 <- var(group2)
+variance_ratio_statistic <- max(var1 / var2, var2 / var1)
+
+cat("ks=",ks_statistic,'\n')
+cat("variance_ratio=",variance_ratio_statistic)
+```
+
+### ii
+
+```{r}
+set.seed(502)
+n_randomizations <- 10000
+ks_distribution <- numeric(n_randomizations)
+variance_ratio_distribution <- numeric(n_randomizations)
+
+for (i in 1:n_randomizations) {
+
+  randomized_groups <- sample(c( rep(1, length(group1)), rep(2,length(group2))))
+  random_group1 <- Plants$weight[randomized_groups == 1]
+  random_group2 <- Plants$weight[randomized_groups == 2]
+  
+  # KS 
+  ks_distribution[i] <- ks.test(random_group1, random_group2)$statistic
+  
+  # variance ratio
+  random_var1 <- var(random_group1)
+  random_var2 <- var(random_group2)
+  variance_ratio_distribution[i] <- max(random_var1 / random_var2, random_var2 / random_var1)
+}
+
+#  KS  histograms 
+ggplot(data = data.frame(ks_distribution)) +
+  geom_histogram(aes(x = ks_distribution)) +
+  
+  labs(title = "KS  histograms",
+       x = "KS",
+       y = "frequency") 
+
+# variance_ratio histograms 
+ggplot(data = data.frame(variance_ratio_distribution)) +
+  geom_histogram(aes(x = variance_ratio_distribution)) +
+  
+  labs(title = "variance ratio histograms",
+       x = "variance ratio",
+       y = "frequency") 
+```
+
+### iii
+
+```{r}
+ks_p_value <- mean(ks_distribution >= ks_statistic)
+variance_ratio_p_value <- mean(variance_ratio_distribution >= variance_ratio_statistic) 
+
+cat("Kolmogorov-Smirnov p_value:", ks_p_value, "\n")
+cat("variance_ratio p_value:", variance_ratio_p_value, "\n")
+
+```
+
+Test based on the KS-statistic provide evidence against $H_0$, but that based on variance ration does not.
+
+## (c)
+
+There is 0.05 chance of rejecting $H_0$ when it is true for each test. So the probability of neither of tests rejects $H_0$ is $0.95*0.95=0.9025$, and at least one test rejects $H_0$ is $1-0.9025=0.0975$.
+
+# 4
+
+## (a)
+
+$H_0$ : PH treatment does not affect the number of Copepoda
+
+$H_1$ : PH treatment affects the number of Copepoda
+
+```{r}
+# data
+reduced_pH <- c(256, 159, 149)
+neutral_pH <- c(54, 123, 248)
+all_data <- c(reduced_pH, neutral_pH)
+
+# Function of absolute difference of means
+test_statistic <- function(groupA, groupB) {
+  return(abs(mean(groupA) - mean(groupB)))
+}
+
+observed_stat <- test_statistic(reduced_pH, neutral_pH)
+
+# Generate all possible groupings of the data into two groups of 3
+all_permutations <- combn(all_data, 3)
+
+# Calculate the test statistic for each permutation
+n_permutations <- ncol(all_permutations)
+permutation_stats <- numeric(n_permutations)
+
+for (i in 1:n_permutations) {
+  groupA <- all_permutations[, i]
+  groupB <- setdiff(all_data, groupA)
+  permutation_stats[i] <- test_statistic(groupA, groupB)
+}
+
+p_value <- mean(permutation_stats >= observed_stat)
+
+cat("Observed test statistic:", observed_stat, "\n")
+cat("P-value:", p_value, "\n")
+
+```
+
+The test could not reject $H_0$
+
+## (b)
+
+```{r}
+#  t-statistic
+t_statistic <- function(y_A, y_B) {
+  n_A <- length(y_A)
+  n_B <- length(y_B)
+  mean_diff <- abs(mean(y_A) - mean(y_B))
+  
+  s_A_sq <- var(y_A)
+  s_B_sq <- var(y_B)
+  
+  s_p_sq <- ((n_A - 1) * s_A_sq + (n_B - 1) * s_B_sq) / ((n_A - 1) + (n_B - 1))
+  t_stat <- mean_diff / sqrt(s_p_sq * (1/n_A + 1/n_B))
+  
+  return(t_stat)
+}
+
+observed_t_stat <- t_statistic(reduced_pH, neutral_pH)
+
+n_permutations <- ncol(all_permutations)
+permutation_t_stats <- numeric(n_permutations)
+
+
+for (i in 1:n_permutations) {
+  groupA <- all_permutations[, i]
+  groupB <- setdiff(all_data, groupA)
+  permutation_t_stats[i] <- t_statistic(groupA, groupB)
+}
+
+p_value_t <- mean(permutation_t_stats >= observed_t_stat)
+
+cat("Observed test statistic:", observed_t_stat, "\n")
+cat("P-value:", p_value_t, "\n")
+```
+
+the result is the same as (a).
+
+## (c)
+
+$$
+\begin{aligned}
+h(y_A,y_B)&=(n_A-1)s^2_A+(n_B-1)s^2_B+\frac{n_An_B}{n_A+n_B}(\overline y_B-\overline y_A)^2\\
+&=\sum_{i=1}^{n}y_i^2-n_A\overline y^2_A-n_B\overline y^2_B+\frac{n_An_B}{n_A+n_B}(\overline y_B-\overline y_A)^2\\
+&=\sum_{i=1}^{n}y_i^2-\frac{1}{n_A+n_B}(n_A\overline y_A+n_B\overline y_B)^2\\
+&=\sum_{i=1}^{n}y_i^2-\frac{1}{n_A+n_B}\sum_{i=1}^{n}y_i
+\end{aligned}
+$$
+
+$h(y_A,y_B)$ does not change under randomization. The denominator of $s_p^2$ is decreasing in $(\overline y_B-\overline y_A)$, so $s_p^2$ is still increasing in $(\overline y_B-\overline y_A)$. Thus the p-value calculating the fraction of randomization distribution values greater than the observed value is still the same because of the monotonicity of $s_p^2$.

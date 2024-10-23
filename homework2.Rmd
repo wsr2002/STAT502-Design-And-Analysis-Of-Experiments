@@ -1,0 +1,252 @@
+---
+title: "502 homework2"
+author: "Songran Wang"
+date: "2024-10-16"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1
+
+```{r}
+set.seed(123)
+samples_A <- rnorm(30, mean = 0, sd = sqrt(1))
+samples_B <- rnorm(10, mean = 0, sd = sqrt(4))
+```
+
+## (a)
+
+```{r}
+t_stat_two<-function(yA,yB){
+  nA<-length(yA)
+  nB<-length(yB)
+  sp<-sqrt(((nA-1)*sd(yA)**2+(nB-1)*sd(yB)**2)/(nA+nB-2))
+  denominator<-sp*sqrt((1/nA)+(1/nB))
+  numerator<-(mean(yA)-mean(yB))
+  return (numerator/denominator)
+}
+
+observed_t_stat <- t_stat_two(samples_A, samples_B)
+observed_t_stat
+```
+
+The observed two-sample t-stat is $-1.895$
+
+## (b)
+
+```{r}
+set.seed(123)
+combined_samples <- c(samples_A, samples_B)# sample_A+sample_B
+simulated_t_stats <- numeric(10000)#store samples t stats values
+for (i in 1:10000)
+{
+  permuted_samples=sample(combined_samples,replace = TRUE)
+  permuted_A <- permuted_samples[1:30]
+  permuted_B <- permuted_samples[31:40]
+  simulated_t_stats[i] <- t_stat_two(permuted_A, permuted_B)
+}
+p_value <- mean(abs(simulated_t_stats) >= abs(observed_t_stat))
+cat("P-value of the permutation test:", p_value, "\n")
+```
+
+$H_0: \mu_A=\mu_B$
+
+because 0.0707\>0.05, we could not reject the null hypothesis.
+
+## (c)
+
+### i
+
+$t\left(\mathbf{Y}_A, \mathbf{Y}_B\right)=\frac{\bar{Y}_B-\bar{Y}_A}{s_p \sqrt{\frac{1}{n_A}+\frac{1}{n_B}}} \sim t_{n_A+n_B-2}$
+
+degrees of freedom is 38
+
+### ii
+
+```{r}
+critical_value <- qt(1 - 0.05/2, 38)
+cat('the critical value is:',critical_value)
+```
+
+the critical value is 2.024
+
+### iii
+
+```{r}
+p_value_t_test <- 2 * (1 - pt(abs(observed_t_stat), 38))
+cat('p value of the two samples t test:',p_value_t_test)
+```
+
+the p value is 0.066, so we cannot reject the null hypothesis.
+
+# 2
+
+## (a)
+
+$t_w\left(\boldsymbol{y}_A, \boldsymbol{y}_B\right)=\frac{\bar{y}_B-\bar{y}_A}{\sqrt{\frac{s_A^2}{n_A}+\frac{s_B^2}{n_B}}}$
+
+```{r}
+welch_t_stat=(mean(samples_A)-mean(samples_B))/sqrt(var(samples_A)/length(samples_A)+var(samples_B)/length(samples_B))
+welch_t_stat
+```
+
+so the observed test statistic is -1.826
+
+## (b)
+
+$t_w\left(\boldsymbol{y}_A, \boldsymbol{y}_B\right)=\frac{\bar{y}_B-\bar{y}_A}{\sqrt{\frac{s_A^2}{n_A}+\frac{s_B^2}{n_B}}}$, this stat test is a $t_{\nu_w}$-distribution, where $\nu_w=\frac{\left(\frac{s_A^2}{n_A}+\frac{s_B^2}{n_B}\right)^2}{\frac{1}{n_A-1}\left(\frac{s_A^2}{n_A}\right)^2+\frac{1}{n_B-1}\left(\frac{s_B^2}{n_B}\right)^2}$
+
+```{r}
+v_w=(var(samples_A)/length(samples_A)+var(samples_B)/length(samples_B))^2/(1/(length(samples_A)-1)*(var(samples_A)/length(samples_A))^2+1/(length(samples_B)-1)*(var(samples_B)/length(samples_B))^2)
+v_w
+```
+
+so the freedom degree is 14.565
+
+## (c)
+
+```{r}
+critical_value <- qt(1 - 0.05/2, v_w)
+cat('the critical value is:',critical_value)
+```
+
+so the critical value is 2.137
+
+## (d)
+
+```{r}
+p_value_t_test <- 2 * (1 - pt(abs(welch_t_stat), v_w))
+cat('p value of the two samples t test:',p_value_t_test)
+```
+
+the p value is 0.088, so we cannot reject the null hypothesis.
+
+## (e)
+
+In the Problem 1, it is assumed that the two groups have the same variance, however the Welch's t-test is not. Two statistics in each test are different as well.
+
+# 3
+
+## (a)
+
+```{r}
+set.seed(123)
+
+
+
+# i.  long-tailed distribution(normal cauchy)
+long_tailed_samples <- rcauchy(1000)
+qqnorm(long_tailed_samples, main = "Long-Tailed Distribution (normal cauchy)")
+qqline(long_tailed_samples, col = "red")
+
+# ii.  short-tailed distribution(normal)
+short_tailed_samples <- rnorm(1000)
+qqnorm(short_tailed_samples, main = "Short-Tailed Distribution (normal)")
+qqline(short_tailed_samples, col = "red")
+
+# iii.  left-skewed distribution(beta distribution(6,2))
+left_skewed_samples <- rbeta(1000, 6, 2)
+qqnorm(left_skewed_samples, main = "Left-Skewed Distribution (beta (6,2))")
+qqline(left_skewed_samples, col = "red")
+
+# iv. right-skewed distribution(Chi-squared(3))
+right_skewed_samples <- rchisq(1000, df=3)
+qqnorm(right_skewed_samples, main = "Right-Skewed Distribution (Chi-squared(3))")
+qqline(right_skewed_samples, col = "red")
+
+```
+
+## (b)
+
+1.  Top left corner: There are some points deviate the line at the end, which seems that this distribution is long-tailed.
+2.  Top right corner: The middle of points line is curved, with some deviation at both ends, which means that this distribution is right-skewed.
+3.  Bottom left corner: Points at both ends see extreme deviations, so the distribution is long-tailed. Also it seems it is left-skewed.
+4.  Bottom right corner: Points almost follow the line, showing that this distribution is nearly normal.
+
+# 4
+
+```{r}
+feather <- data.frame(
+  Typical = c(-0.255, -0.213, -0.190, -0.185, -0.045, -0.025, -0.015, 
+              0.003, 0.015, 0.020, 0.023, 0.040, 0.040, 0.050, 0.055, 0.058),
+  Odd = c(-0.324, -0.185, -0.299, -0.144, -0.027, -0.039, -0.264, 
+          -0.077, -0.017, -0.169, -0.096, -0.330, -0.346, -0.191, -0.128, -0.182)
+)
+```
+
+## (a)
+
+the difference between two paired groups is $d_i=$ $x_{1 i}-x_{2 i}$
+
+$\bar{d}=\frac{1}{n} \sum_{i=1}^n d_i$
+
+$s_d=\sqrt{\frac{\sum_{i=1}^n\left(d_i-\bar{d}\right)^2}{n-1}}$
+
+$t=\frac{\bar{d}}{s_d / \sqrt{n}}\sim t(n-1)$
+
+```{r}
+t_test_paired <- t.test(feather$Typical, feather$Odd, paired = TRUE)
+t_test_paired
+```
+
+so the test statistic is $4.0647$, and it follow $t(15)$ distribution.
+
+## (b)
+
+the non-centrality parameter is $\frac{\delta}{S \sqrt{\frac{1}{n}}}$, where $\delta=0.05$
+
+```{r}
+typical <- feather$Typical
+odd <- feather$Odd
+
+n <- length(typical)
+
+s<-var(typical-odd)
+
+ncp=0.05/(sqrt(s)*sqrt(1/n))
+ncp
+```
+
+the non-centrality parameter is $1.482$
+
+## (c)
+
+$$
+\begin{aligned}
+\operatorname{Power}(\delta) & =\operatorname{Pr}\left(\text { reject } H_0 \mid \mu=\delta\right) \\
+& =\operatorname{Pr}\left(\left|t\right| \geq t_{1-\alpha / 2, n-1} \mid \mu=\delta\right)\\
+& =\operatorname{Pr}\left(t>t_{1-\alpha / 2, n-1}\right)+\operatorname{Pr}\left(t<-t_{1-\alpha / 2, n-1}\right) \\
+& =\left[1-\operatorname{Pr}\left(t<t_{1-\alpha / 2, n-1}\right)\right]+\operatorname{Pr}\left(t<-t_{1-\alpha / 2, n-1}\right)
+\end{aligned}
+$$
+
+where $\delta=0.05$
+
+```{r}
+t.crit <-qt( 1-0.05/2 , n-1 )
+t.gamma=ncp
+t.power<-1-pt(t.crit,n-1,ncp=t.gamma )+pt(-t.crit,n-1,ncp=t.gamma )
+t.power
+```
+
+the power is 28.4%
+
+## (d)
+
+```{r}
+n<-seq(20,150)
+t.crit<-qt(1-0.05/2,n-1)
+t.gamma=0.05/(sqrt(s)*sqrt(1/n))
+t.power<-1-pt(t.crit,n-1,ncp=t.gamma )+pt(-t.crit,n-1,ncp=t.gamma )
+plot(n, t.power, xlab = "Sample Size (n)", ylab = "Power (t.power)", 
+     main = "Scatterplot of t.power vs. Sample Size", 
+     pch = 19)
+index <- which(t.power >= 0.9)[1]
+points(n[index], t.power[index], col = "red", pch = 19, cex = 1.5) 
+text(n[index],t.power[index], labels = paste("(", n[index], ",", t.power[index], ")", sep = ""), pos = 4, col = "red")
+```
+
+when n=79 for each group, the power is over 90%
